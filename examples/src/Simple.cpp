@@ -15,7 +15,7 @@ void Load()
     std::cout << json.ToString() << '\n';
 
     // Print an individual entry of the loaded json
-    std::cout << "loadedJson[\"string\"] = " << json["strin"].GetString() << '\n';
+    std::cout << "loadedJson[\"string\"] = " << json["string"].GetString() << '\n';
 }
 
 void Save()
@@ -25,12 +25,12 @@ void Save()
     json["number"] = 3;
     json["none"] = nullptr;
 
-    // Create an inline list
-    json["list"] = Json::array_t();
-    json["list"].format = JsonFormat::Inline;
-    json["list"].push_back(1);
-    json["list"].push_back("2");
-    json["list"].push_back(true);
+    // Create an inline array
+    json["array"] = Json::array_t();
+    json["array"].format = JsonFormat::Inline;
+    json["array"].push_back(1);
+    json["array"].push_back("2");
+    json["array"].push_back(true);
 
     // Save the created json
     json.Save("out.json");

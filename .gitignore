@@ -3,3 +3,4 @@ build*/
 .cache/
 docs/
 examples/out.json
+file.json

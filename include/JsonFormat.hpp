@@ -67,7 +67,7 @@ class Json
 #ifndef JSON_FORMAT_STRICT_ERRORS
         if (IsNull()) return 0;
 #endif
-        if (!IsBool()) throw std::runtime_error("JSONValue is not a bool");
+        if (!IsBool()) throw std::runtime_error("JsonValue is not a bool");
         return std::get<bool>(value);
     }
 
@@ -82,7 +82,7 @@ class Json
 #ifndef JSON_FORMAT_STRICT_ERRORS
         if (IsNull()) return 0;
 #endif
-        throw std::runtime_error("JSONValue is not an int");
+        throw std::runtime_error("JsonValue is not an int");
     }
 
     double GetDouble() const
@@ -91,7 +91,7 @@ class Json
 #ifndef JSON_FORMAT_STRICT_ERRORS
         if (IsNull()) return 0;
 #endif
-        if (!IsDouble()) throw std::runtime_error("JSONValue is not a double");
+        if (!IsDouble()) throw std::runtime_error("JsonValue is not a double");
         return std::get<double>(value);
     }
 
@@ -100,7 +100,7 @@ class Json
 #ifndef JSON_FORMAT_STRICT_ERRORS
         if (IsNull()) return "";
 #endif
-        if (!IsString()) throw std::runtime_error("JSONValue is not a string");
+        if (!IsString()) throw std::runtime_error("JsonValue is not a string");
         return std::get<std::string>(value);
     }
 
@@ -109,7 +109,7 @@ class Json
 #ifndef JSON_FORMAT_STRICT_ERRORS
         if (IsNull()) value = array_t{};
 #endif
-        if (!IsArray()) throw std::runtime_error("JSONValue is not an array");
+        if (!IsArray()) throw std::runtime_error("JsonValue is not an array");
         return std::get<array_t>(value);
     }
 
@@ -118,19 +118,19 @@ class Json
 #ifndef JSON_FORMAT_STRICT_ERRORS
         if (IsNull()) value = object_t{};
 #endif
-        if (!IsObject()) throw std::runtime_error("JSONValue is not an object");
+        if (!IsObject()) throw std::runtime_error("JsonValue is not an object");
         return std::get<object_t>(value);
     }
 
     const array_t& GetArray() const
     {
-        if (!IsArray()) throw std::runtime_error("JSONValue is not an array");
+        if (!IsArray()) throw std::runtime_error("JsonValue is not an array");
         return std::get<array_t>(value);
     }
 
     const object_t& GetObject() const
     {
-        if (!IsObject()) throw std::runtime_error("JSONValue is not an object");
+        if (!IsObject()) throw std::runtime_error("JsonValue is not an object");
         return std::get<object_t>(value);
     }
 

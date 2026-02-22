@@ -21,6 +21,7 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/thirdparty/JsonFormat ${CMAKE_BINARY_DIR}/_
 | Option name | Purpose |
 | --- | --- |
 | JSON_FORMAT_STRICT_ERRORS | Get*() functions throw an error instead of returning 0 on a null object  |
+| JSON_FORMAT_BUILD_TESTS | Build tests. Run `git submodule update --init --recursive --depth 1` after cloning to download googletest which is required for tests |
 
 ## Examples
 

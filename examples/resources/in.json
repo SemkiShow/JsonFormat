@@ -1,6 +1,6 @@
 {
     "int": 5,
     "string": "value",
-    "list": [1, true, "str"],
+    "array": [1, true, "str"],
     "object": {"nested": true}
 }

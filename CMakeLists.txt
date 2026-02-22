@@ -17,3 +17,16 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 if (JSON_FORMAT_STRICT_ERRORS)
     target_compile_definitions(${PROJECT_NAME} PUBLIC -DJSON_FORMAT_STRICT_ERRORS)
 endif()
+
+if (JSON_FORMAT_BUILD_TESTS)
+    enable_testing()
+
+    add_subdirectory(${CMAKE_SOURCE_DIR}/thirdparty/googletest ${CMAKE_BINARY_DIR}/_deps/googletest-build SYSTEM)
+
+    add_executable(${PROJECT_NAME}Tests tests/main.cpp)
+    set_target_properties(${PROJECT_NAME}Tests PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+    target_link_libraries(${PROJECT_NAME}Tests PRIVATE ${PROJECT_NAME} GTest::gtest_main)
+
+    include(GoogleTest)
+    gtest_discover_tests(${PROJECT_NAME}Tests)
+endif()
