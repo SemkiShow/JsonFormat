@@ -26,7 +26,7 @@ enum class JsonFormat
 
 /**
  * @brief The json object class
- * 
+ *
  */
 class Json
 {
@@ -249,7 +249,9 @@ class Json
     }
 
     void Save(const std::filesystem::path& path);
+    [[nodiscard]]
     static Json Load(const std::filesystem::path& path);
+    [[nodiscard]]
     static Json Parse(const std::string& json);
     std::string ToString(size_t level = 0) const;
 
