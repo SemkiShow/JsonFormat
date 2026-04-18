@@ -70,15 +70,15 @@ TEST_F(Loading, TypeQueries)
 
 TEST_F(Loading, Queries)
 {
-    EXPECT_EQ(json_["bool"].GetBool(), true);
-    EXPECT_EQ(json_["int"].GetInt(), 5);
-    EXPECT_EQ(json_["double"].GetDouble(), 1.23);
-    EXPECT_EQ(json_["string"].GetString(), "str");
-    EXPECT_EQ(json_["array"][0].GetInt(), 1);
-    EXPECT_EQ(json_["array"][1].GetString(), "2");
-    EXPECT_EQ(json_["array"][2].GetBool(), true);
-    EXPECT_EQ(json_["object"]["nested"].GetBool(), true);
-    EXPECT_EQ(json_["object"]["nestedValue"].GetString(), "abc");
+    EXPECT_EQ(json_["bool"], true);
+    EXPECT_EQ(json_["int"], 5);
+    EXPECT_EQ(json_["double"], 1.23);
+    EXPECT_EQ(json_["string"], "str");
+    EXPECT_EQ(json_["array"][0], 1);
+    EXPECT_EQ(json_["array"][1], "2");
+    EXPECT_EQ(json_["array"][2], true);
+    EXPECT_EQ(json_["object"]["nested"], true);
+    EXPECT_EQ(json_["object"]["nestedValue"], "abc");
 }
 
 TEST_F(Loading, StrictErrors)

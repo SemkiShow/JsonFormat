@@ -15,7 +15,7 @@ static void Load()
     std::cout << json.ToString() << '\n';
 
     // Print an individual entry of the loaded json
-    std::cout << "loadedJson[\"string\"] = " << json["string"].GetString() << '\n';
+    std::cout << "loadedJson[\"string\"] = " << json["string"] << '\n';
 }
 
 static void Save()

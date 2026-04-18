@@ -34,6 +34,11 @@ class Json
     using array_t = std::vector<Json>;
     using object_t = std::unordered_map<std::string, Json>;
     using value_t = std::variant<std::nullptr_t, bool, int, double, std::string, array_t, object_t>;
+    template <typename T>
+    using is_json_type = std::disjunction<std::is_same<T, std::nullptr_t>, std::is_same<T, bool>,
+                                          std::is_same<T, int>, std::is_same<T, double>,
+                                          std::is_same<T, std::string>, std::is_same<T, array_t>,
+                                          std::is_same<T, object_t>>;
 
   private:
     value_t value_;
@@ -174,14 +179,26 @@ class Json
         return std::get<object_t>(value_)[key];
     }
 
-    const Json& operator[](const std::string& key) const
+    Json& operator[](const char* key)
     {
-        if (!IsObject()) throw std::runtime_error("Not an object");
-        const auto& obj = std::get<object_t>(value_);
-        auto it = obj.find(key);
-        if (it == obj.end()) throw std::out_of_range("Key not found");
-        return it->second;
+        if (!IsObject()) value_ = object_t{};
+        return std::get<object_t>(value_)[key];
     }
+
+    Json& operator[](int idx)
+    {
+        if (!IsArray()) value_ = array_t{};
+        return std::get<array_t>(value_)[idx];
+    }
+
+    // const Json& operator[](const std::string& key) const
+    // {
+    //     if (!IsObject()) throw std::runtime_error("Not an object");
+    //     const auto& obj = std::get<object_t>(value_);
+    //     auto it = obj.find(key);
+    //     if (it == obj.end()) throw std::out_of_range("Key not found");
+    //     return it->second;
+    // }
 
     Json& operator[](size_t index)
     {
@@ -199,54 +216,45 @@ class Json
         return arr[index];
     }
 
-    // Assignment
-    Json& operator=(std::nullptr_t)
+    template <typename T, typename = std::enable_if_t<is_json_type<std::decay_t<T>>::value>>
+    Json& operator=(T&& v)
     {
-        value_ = nullptr;
+        value_ = std::forward<T>(v);
         return *this;
     }
 
-    Json& operator=(bool b)
+    template <typename T, typename = std::enable_if_t<is_json_type<T>::value>>
+    operator T() const
     {
-        value_ = b;
-        return *this;
+        return std::get<T>(value_);
     }
 
-    Json& operator=(int n)
+    template <typename T, typename = std::enable_if_t<is_json_type<T>::value>>
+    bool operator==(const T& other) const
     {
-        value_ = n;
-        return *this;
+        if (auto* val = std::get_if<T>(&value_))
+        {
+            return *val == other;
+        }
+        return false;
     }
 
-    Json& operator=(double n)
+    bool operator==(const char* other) const
     {
-        value_ = n;
-        return *this;
+        if (const std::string* val = std::get_if<std::string>(&value_))
+        {
+            return *val == other;
+        }
+        return false;
     }
 
-    Json& operator=(const char* s)
+    template <typename T>
+    bool operator!=(const T& other) const
     {
-        value_ = std::string(s);
-        return *this;
+        return !(*this == other);
     }
 
-    Json& operator=(const std::string& s)
-    {
-        value_ = s;
-        return *this;
-    }
-
-    Json& operator=(const array_t& a)
-    {
-        value_ = a;
-        return *this;
-    }
-
-    Json& operator=(const object_t& o)
-    {
-        value_ = o;
-        return *this;
-    }
+    bool operator!=(const char* other) const { return !(*this == other); }
 
     void Save(const std::filesystem::path& path) const;
     [[nodiscard]] static Json Load(const std::filesystem::path& path);
@@ -263,3 +271,9 @@ class Json
     static void EscapeString(std::string& out, const std::string& s);
     void ToString(std::string& buf, size_t level = 0) const;
 };
+
+inline std::ostream& operator<<(std::ostream& os, const Json& json)
+{
+    os << json.ToString();
+    return os;
+}
