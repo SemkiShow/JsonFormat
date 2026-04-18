@@ -8,23 +8,25 @@
 #include <fstream>
 #include <iostream>
 
-void Indentation(std::string& buf, size_t level) { buf.append(4 * level, ' '); }
+static void Indentation(std::string& buf, size_t level) { buf.append(4 * level, ' '); }
 
-void StdToString(std::string& buf, int val)
+static void StdToString(std::string& buf, int val)
 {
-    char tmp[64];
-    auto [ptr, ec] = std::to_chars(tmp, tmp + 64, val);
+    constexpr int TMP_SIZE = 64;
+    char tmp[TMP_SIZE];
+    auto [ptr, ec] = std::to_chars(tmp, tmp + TMP_SIZE, val);
     buf.append(tmp, ptr - tmp);
 }
 
-void StdToString(std::string& buf, double val)
+static void StdToString(std::string& buf, double val)
 {
-    char tmp[64];
-    auto [ptr, ec] = std::to_chars(tmp, tmp + 64, val);
+    constexpr int TMP_SIZE = 64;
+    char tmp[TMP_SIZE];
+    auto [ptr, ec] = std::to_chars(tmp, tmp + TMP_SIZE, val);
     buf.append(tmp, ptr - tmp);
 }
 
-int Stoi(std::string_view s)
+static int Stoi(std::string_view s)
 {
     int val;
     auto [ptr, ec] = std::from_chars(s.data(), s.data() + s.size(), val);
@@ -32,7 +34,7 @@ int Stoi(std::string_view s)
     throw std::runtime_error("Failed to convert " + std::string(s));
 }
 
-double Stod(std::string_view s)
+static double Stod(std::string_view s)
 {
     double val;
     auto [ptr, ec] = std::from_chars(s.data(), s.data() + s.size(), val);
@@ -42,7 +44,7 @@ double Stod(std::string_view s)
 
 void Json::SkipWhitespace(const std::string& s, size_t& idx)
 {
-    while (idx < s.size() && isspace(s[idx])) ++idx;
+    while (idx < s.size() && (isspace(s[idx]) != 0)) ++idx;
 }
 
 Json Json::ParseValue(const std::string& s, size_t& idx)
@@ -53,22 +55,21 @@ Json Json::ParseValue(const std::string& s, size_t& idx)
     if (s[idx] == '{') return ParseObject(s, idx);
     if (s[idx] == '[') return ParseArray(s, idx);
     if (s[idx] == '"') return ParseString(s, idx);
-    if (isdigit(s[idx]) || s[idx] == '-' || s[idx] == '+') return ParseNumber(s, idx);
-    if (s.compare(idx, 4, "true") == 0)
+    if ((isdigit(s[idx]) != 0) || s[idx] == '-' || s[idx] == '+') return ParseNumber(s, idx);
+
+    auto checkForToken = [&s, &idx](const std::string& token) -> bool
     {
-        idx += 4;
-        return Json(true);
-    }
-    if (s.compare(idx, 5, "false") == 0)
-    {
-        idx += 5;
-        return Json(false);
-    }
-    if (s.compare(idx, 4, "null") == 0)
-    {
-        idx += 4;
-        return Json(nullptr);
-    }
+        if (s.compare(idx, token.size(), token) == 0)
+        {
+            idx += token.size();
+            return true;
+        }
+        return false;
+    };
+
+    if (checkForToken("true")) return {true};
+    if (checkForToken("false")) return {false};
+    if (checkForToken("null")) return {nullptr};
 
     throw std::runtime_error(std::string("Unexpected token: ") + s[idx]);
 }
@@ -102,7 +103,7 @@ Json Json::ParseObject(const std::string& s, size_t& idx)
         if (s[idx] != ',') throw std::runtime_error("Expected ',' or '}'");
         ++idx;
     }
-    return Json(obj);
+    return {obj};
 }
 
 Json Json::ParseArray(const std::string& s, size_t& idx)
@@ -128,7 +129,7 @@ Json Json::ParseArray(const std::string& s, size_t& idx)
         if (s[idx] != ',') throw std::runtime_error("Expected ',' or ']'");
         ++idx;
     }
-    return Json(arr);
+    return {arr};
 }
 
 Json Json::ParseString(const std::string& s, size_t& idx)
@@ -180,7 +181,7 @@ Json Json::ParseString(const std::string& s, size_t& idx)
             str.push_back(s[idx]);
         ++idx;
     }
-    return Json(str);
+    return {str};
 }
 
 Json Json::ParseNumber(std::string_view s, size_t& idx)
@@ -193,7 +194,7 @@ Json Json::ParseNumber(std::string_view s, size_t& idx)
     while (idx < s.size())
     {
         char c = s[idx];
-        if (isdigit(c))
+        if (isdigit(c) != 0)
         {
             ++idx;
         }
@@ -208,9 +209,9 @@ Json Json::ParseNumber(std::string_view s, size_t& idx)
             isDouble = true;
             ++idx;
             if (idx < s.size() && (s[idx] == '+' || s[idx] == '-')) ++idx;
-            if (idx >= s.size() || !isdigit(s[idx]))
+            if (idx >= s.size() || (isdigit(s[idx]) == 0))
                 throw std::runtime_error("Invalid number: exponent missing digits");
-            while (idx < s.size() && isdigit(s[idx])) ++idx;
+            while (idx < s.size() && (isdigit(s[idx]) != 0)) ++idx;
         }
         else
         {
@@ -226,17 +227,13 @@ Json Json::ParseNumber(std::string_view s, size_t& idx)
         {
             // If it has decimal point or exponent - store as double
             double d = Stod(numStr);
-            return Json(d);
+            return {d};
         }
-        else
-        {
-            // Try parsing as int first
-            int n = Stoi(numStr);
-            if (n >= INT_MIN && n <= INT_MAX)
-                return Json(n); // store as int if fits
-            else
-                return Json(static_cast<double>(n)); // store as double if too big
-        }
+
+        // Try parsing as int first
+        int n = Stoi(numStr);
+        if (n >= INT_MIN && n <= INT_MAX) return {n}; // store as int if fits
+        return {static_cast<double>(n)};              // store as double if too big
     }
     catch (const std::exception& e)
     {
@@ -283,20 +280,20 @@ void Json::ToString(std::string& buf, size_t level) const
     if (IsNull())
         buf += "null";
     else if (IsBool())
-        buf += (std::get<bool>(value) ? "true" : "false");
+        buf += (std::get<bool>(value_) ? "true" : "false");
     else if (IsInt())
-        StdToString(buf, std::get<int>(value));
+        StdToString(buf, std::get<int>(value_));
     else if (IsDouble())
-        StdToString(buf, std::get<double>(value));
+        StdToString(buf, std::get<double>(value_));
     else if (IsString())
     {
         buf += "\"";
-        EscapeString(buf, std::get<std::string>(value));
+        EscapeString(buf, std::get<std::string>(value_));
         buf += "\"";
     }
     else if (IsArray())
     {
-        const auto& arr = std::get<array_t>(value);
+        const auto& arr = std::get<array_t>(value_);
         buf += "[";
         if (format == JsonFormat::Newline) buf += '\n';
         for (size_t i = 0; i < arr.size(); ++i)
@@ -311,7 +308,7 @@ void Json::ToString(std::string& buf, size_t level) const
     }
     else if (IsObject())
     {
-        const auto& obj = std::get<object_t>(value);
+        const auto& obj = std::get<object_t>(value_);
         buf += "{";
         if (format == JsonFormat::Newline) buf += '\n';
         size_t count = 0;
@@ -332,13 +329,14 @@ void Json::ToString(std::string& buf, size_t level) const
 
 std::string Json::ToString(size_t level) const
 {
+    constexpr int STR_START_SIZE = 4 * 1024 * 1024;
     std::string str;
-    str.reserve(4 * 1024 * 1024);
+    str.reserve(STR_START_SIZE);
     ToString(str, level);
     return str;
 }
 
-void Json::Save(const std::filesystem::path& path)
+void Json::Save(const std::filesystem::path& path) const
 {
     std::ofstream f(path);
     if (!f) throw std::runtime_error("Cannot open file: " + path.string());
@@ -351,11 +349,11 @@ Json Json::Load(const std::filesystem::path& path)
     std::ifstream f(path, std::ios::binary);
     if (!f) throw std::runtime_error("Cannot open file: " + path.string());
 
-    std::streamsize size = std::filesystem::file_size(path);
-    if (size <= 0) return Json();
+    uintmax_t size = std::filesystem::file_size(path);
+    if (size <= 0) return {};
 
     std::string s(size, '\0');
-    if (f.read(s.data(), size))
+    if (f.read(s.data(), static_cast<std::streamsize>(size)))
     {
         return Parse(s);
     }
@@ -363,8 +361,8 @@ Json Json::Load(const std::filesystem::path& path)
     throw std::runtime_error("Failed to read file: " + path.string());
 }
 
-Json Json::Parse(const std::string& s)
+Json Json::Parse(const std::string& json)
 {
     size_t idx = 0;
-    return ParseValue(s, idx);
+    return ParseValue(json, idx);
 }

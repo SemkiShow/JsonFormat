@@ -5,7 +5,7 @@
 #include <JsonFormat.hpp>
 #include <iostream>
 
-void Load()
+static void Load()
 {
     // Load a json file
     Json json = Json::Load("resources/in.json");
@@ -18,7 +18,7 @@ void Load()
     std::cout << "loadedJson[\"string\"] = " << json["string"].GetString() << '\n';
 }
 
-void Save()
+static void Save()
 {
     // Save data to a json file
     Json json;

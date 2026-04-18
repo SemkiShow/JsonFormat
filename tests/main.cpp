@@ -6,35 +6,35 @@
 #include <JsonFormat.hpp>
 #include <gtest/gtest.h>
 
-const std::string file = "file.json";
+const std::string G_FILE = "file.json";
 
 class Saving : public testing::Test
 {
   protected:
     void SetUp() override
     {
-        if (std::filesystem::exists(file)) std::filesystem::remove(file);
+        if (std::filesystem::exists(G_FILE)) std::filesystem::remove(G_FILE);
 
-        json["null"] = nullptr;
-        json["bool"] = true;
-        json["int"] = 5;
-        json["double"] = 1.23;
-        json["string"] = "str";
-        json["array"] = Json::array_t();
-        json["array"].format = JsonFormat::Inline;
-        json["array"].push_back(1);
-        json["array"].push_back("2");
-        json["array"].push_back(true);
-        json["object"]["nested"] = true;
-        json["object"]["nestedValue"] = "abc";
-        json.Save(file);
+        json_["null"] = nullptr;
+        json_["bool"] = true;
+        json_["int"] = 5;       // NOLINT (readability-magic-numbers)
+        json_["double"] = 1.23; // NOLINT (readability-magic-numbers)
+        json_["string"] = "str";
+        json_["array"] = Json::array_t();
+        json_["array"].format = JsonFormat::Inline;
+        json_["array"].push_back(1);
+        json_["array"].push_back("2");
+        json_["array"].push_back(true);
+        json_["object"]["nested"] = true;
+        json_["object"]["nestedValue"] = "abc";
+        json_.Save(G_FILE);
     }
-    Json json;
+    Json json_;
 };
 
 TEST_F(Saving, Formatting)
 {
-    EXPECT_EQ(json.ToString(),
+    EXPECT_EQ(json_.ToString(),
               R"({
     "object": {
         "nestedValue": "abc", 
@@ -52,38 +52,38 @@ TEST_F(Saving, Formatting)
 class Loading : public testing::Test
 {
   protected:
-    void SetUp() override { json = Json::Load(file); }
-    Json json;
+    void SetUp() override { json_ = Json::Load(G_FILE); }
+    Json json_;
 };
 
 TEST_F(Loading, TypeQueries)
 {
-    EXPECT_TRUE(json["null"].IsNull());
-    EXPECT_TRUE(json["bool"].IsBool());
-    EXPECT_TRUE(json["int"].IsInt());
-    EXPECT_TRUE(json["double"].IsDouble());
-    EXPECT_TRUE(json["string"].IsString());
-    EXPECT_TRUE(json["array"].IsArray());
-    EXPECT_TRUE(json["object"].IsObject());
-    EXPECT_FALSE(json["object"].IsNull());
+    EXPECT_TRUE(json_["null"].IsNull());
+    EXPECT_TRUE(json_["bool"].IsBool());
+    EXPECT_TRUE(json_["int"].IsInt());
+    EXPECT_TRUE(json_["double"].IsDouble());
+    EXPECT_TRUE(json_["string"].IsString());
+    EXPECT_TRUE(json_["array"].IsArray());
+    EXPECT_TRUE(json_["object"].IsObject());
+    EXPECT_FALSE(json_["object"].IsNull());
 }
 
 TEST_F(Loading, Queries)
 {
-    EXPECT_EQ(json["bool"].GetBool(), true);
-    EXPECT_EQ(json["int"].GetInt(), 5);
-    EXPECT_EQ(json["double"].GetDouble(), 1.23);
-    EXPECT_EQ(json["string"].GetString(), "str");
-    EXPECT_EQ(json["array"][0].GetInt(), 1);
-    EXPECT_EQ(json["array"][1].GetString(), "2");
-    EXPECT_EQ(json["array"][2].GetBool(), true);
-    EXPECT_EQ(json["object"]["nested"].GetBool(), true);
-    EXPECT_EQ(json["object"]["nestedValue"].GetString(), "abc");
+    EXPECT_EQ(json_["bool"].GetBool(), true);
+    EXPECT_EQ(json_["int"].GetInt(), 5);
+    EXPECT_EQ(json_["double"].GetDouble(), 1.23);
+    EXPECT_EQ(json_["string"].GetString(), "str");
+    EXPECT_EQ(json_["array"][0].GetInt(), 1);
+    EXPECT_EQ(json_["array"][1].GetString(), "2");
+    EXPECT_EQ(json_["array"][2].GetBool(), true);
+    EXPECT_EQ(json_["object"]["nested"].GetBool(), true);
+    EXPECT_EQ(json_["object"]["nestedValue"].GetString(), "abc");
 }
 
 TEST_F(Loading, StrictErrors)
 {
-    EXPECT_THROW(json["bool"].GetString(), std::runtime_error);
-    EXPECT_THROW(json["null"].GetArray(), std::runtime_error);
-    EXPECT_NO_THROW(json["int"].GetInt());
+    EXPECT_THROW(json_["bool"].GetString(), std::runtime_error);
+    EXPECT_THROW(json_["null"].GetArray(), std::runtime_error);
+    EXPECT_NO_THROW(json_["int"].GetInt());
 }
