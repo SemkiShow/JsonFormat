@@ -8,9 +8,13 @@
 
 #pragma once
 
+#include <cstddef>
 #include <filesystem>
+#include <ostream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
+#include <type_traits>
 #include <unordered_map>
 #include <variant>
 #include <vector>
@@ -191,20 +195,11 @@ class Json
         return std::get<array_t>(value_)[idx];
     }
 
-    // const Json& operator[](const std::string& key) const
-    // {
-    //     if (!IsObject()) throw std::runtime_error("Not an object");
-    //     const auto& obj = std::get<object_t>(value_);
-    //     auto it = obj.find(key);
-    //     if (it == obj.end()) throw std::out_of_range("Key not found");
-    //     return it->second;
-    // }
-
     Json& operator[](size_t index)
     {
         if (!IsArray()) value_ = array_t{};
         auto& arr = std::get<array_t>(value_);
-        if (index >= arr.size()) arr.resize(index + 1);
+        if (index >= arr.size()) throw std::out_of_range("Index out of range");
         return arr[index];
     }
 
@@ -258,17 +253,10 @@ class Json
 
     void Save(const std::filesystem::path& path) const;
     [[nodiscard]] static Json Load(const std::filesystem::path& path);
-    [[nodiscard]] static Json Parse(const std::string& json);
+    [[nodiscard]] static Json Parse(std::string_view json);
     std::string ToString(size_t level = 0) const;
 
   private:
-    static void SkipWhitespace(const std::string& s, size_t& idx);
-    static Json ParseValue(const std::string& s, size_t& idx);
-    static Json ParseObject(const std::string& s, size_t& idx);
-    static Json ParseArray(const std::string& s, size_t& idx);
-    static Json ParseString(const std::string& s, size_t& idx);
-    static Json ParseNumber(std::string_view s, size_t& idx);
-    static void EscapeString(std::string& out, const std::string& s);
     void ToString(std::string& buf, size_t level = 0) const;
 };
 

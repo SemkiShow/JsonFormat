@@ -3,6 +3,7 @@ Checks: >
   bugprone-*,
   modernize-*,
   misc-use-internal-linkage,
+  misc-include-cleaner,
   -readability-braces-around-statements,
   -readability-math-missing-parentheses,
   -readability-identifier-length,

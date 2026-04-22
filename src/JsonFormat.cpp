@@ -3,10 +3,20 @@
 // SPDX-License-Identifier: MIT
 
 #include "JsonFormat.hpp"
+#include <cctype>
 #include <charconv>
 #include <climits>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <system_error>
+#include <utility>
 
 static void Indentation(std::string& buf, size_t level) { buf.append(4 * level, ' '); }
 
@@ -42,12 +52,17 @@ static double Stod(std::string_view s)
     throw std::runtime_error("Failed to convert " + std::string(s));
 }
 
-void Json::SkipWhitespace(const std::string& s, size_t& idx)
+static void SkipWhitespace(std::string_view s, size_t& idx)
 {
     while (idx < s.size() && (isspace(s[idx]) != 0)) ++idx;
 }
 
-Json Json::ParseValue(const std::string& s, size_t& idx)
+static Json ParseObject(std::string_view s, size_t& idx);
+static Json ParseArray(std::string_view s, size_t& idx);
+static Json ParseString(std::string_view s, size_t& idx);
+static Json ParseNumber(std::string_view s, size_t& idx);
+
+static Json ParseValue(std::string_view s, size_t& idx)
 {
     SkipWhitespace(s, idx);
     if (idx >= s.size()) throw std::runtime_error("Unexpected end of input");
@@ -57,7 +72,7 @@ Json Json::ParseValue(const std::string& s, size_t& idx)
     if (s[idx] == '"') return ParseString(s, idx);
     if ((isdigit(s[idx]) != 0) || s[idx] == '-' || s[idx] == '+') return ParseNumber(s, idx);
 
-    auto checkForToken = [&s, &idx](const std::string& token) -> bool
+    auto checkForToken = [&s, &idx](std::string_view token) -> bool
     {
         if (s.compare(idx, token.size(), token) == 0)
         {
@@ -74,10 +89,10 @@ Json Json::ParseValue(const std::string& s, size_t& idx)
     throw std::runtime_error(std::string("Unexpected token: ") + s[idx]);
 }
 
-Json Json::ParseObject(const std::string& s, size_t& idx)
+static Json ParseObject(std::string_view s, size_t& idx)
 {
     ++idx; // skip '{'
-    object_t obj;
+    Json::object_t obj;
     SkipWhitespace(s, idx);
     if (idx < s.size() && s[idx] == '}')
     {
@@ -106,10 +121,10 @@ Json Json::ParseObject(const std::string& s, size_t& idx)
     return {obj};
 }
 
-Json Json::ParseArray(const std::string& s, size_t& idx)
+static Json ParseArray(std::string_view s, size_t& idx)
 {
     ++idx; // skip '['
-    array_t arr;
+    Json::array_t arr;
     SkipWhitespace(s, idx);
     if (idx < s.size() && s[idx] == ']')
     {
@@ -132,7 +147,7 @@ Json Json::ParseArray(const std::string& s, size_t& idx)
     return {arr};
 }
 
-Json Json::ParseString(const std::string& s, size_t& idx)
+static Json ParseString(std::string_view s, size_t& idx)
 {
     ++idx; // skip '"'
     std::string str;
@@ -184,7 +199,7 @@ Json Json::ParseString(const std::string& s, size_t& idx)
     return {str};
 }
 
-Json Json::ParseNumber(std::string_view s, size_t& idx)
+static Json ParseNumber(std::string_view s, size_t& idx)
 {
     size_t start = idx;
     if (s[idx] == '-' || s[idx] == '+') ++idx;
@@ -241,7 +256,7 @@ Json Json::ParseNumber(std::string_view s, size_t& idx)
     }
 }
 
-void Json::EscapeString(std::string& out, const std::string& s)
+static void EscapeString(std::string& out, std::string_view s)
 {
     for (char c: s)
     {
@@ -361,7 +376,7 @@ Json Json::Load(const std::filesystem::path& path)
     throw std::runtime_error("Failed to read file: " + path.string());
 }
 
-Json Json::Parse(const std::string& json)
+Json Json::Parse(std::string_view json)
 {
     size_t idx = 0;
     return ParseValue(json, idx);
