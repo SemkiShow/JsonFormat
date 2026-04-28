@@ -76,7 +76,7 @@ class Json
 #ifndef JSON_FORMAT_STRICT_ERRORS
         if (IsNull()) return false;
 #endif
-        if (!IsBool()) throw std::runtime_error("JsonValue is not a bool");
+        if (!IsBool()) throw std::runtime_error("JsonValue is not a bool" + ToString());
         return std::get<bool>(value_);
     }
 
@@ -91,7 +91,7 @@ class Json
 #ifndef JSON_FORMAT_STRICT_ERRORS
         if (IsNull()) return 0;
 #endif
-        throw std::runtime_error("JsonValue is not an int");
+        throw std::runtime_error("JsonValue is not an int" + ToString());
     }
 
     double GetDouble() const
@@ -100,7 +100,7 @@ class Json
 #ifndef JSON_FORMAT_STRICT_ERRORS
         if (IsNull()) return 0;
 #endif
-        if (!IsDouble()) throw std::runtime_error("JsonValue is not a double");
+        if (!IsDouble()) throw std::runtime_error("JsonValue is not a double" + ToString());
         return std::get<double>(value_);
     }
 
@@ -109,7 +109,7 @@ class Json
 #ifndef JSON_FORMAT_STRICT_ERRORS
         if (IsNull()) return "";
 #endif
-        if (!IsString()) throw std::runtime_error("JsonValue is not a string");
+        if (!IsString()) throw std::runtime_error("JsonValue is not a string" + ToString());
         return std::get<std::string>(value_);
     }
 
@@ -118,7 +118,7 @@ class Json
 #ifndef JSON_FORMAT_STRICT_ERRORS
         if (IsNull()) value_ = array_t{};
 #endif
-        if (!IsArray()) throw std::runtime_error("JsonValue is not an array");
+        if (!IsArray()) throw std::runtime_error("JsonValue is not an array" + ToString());
         return std::get<array_t>(value_);
     }
 
@@ -127,19 +127,19 @@ class Json
 #ifndef JSON_FORMAT_STRICT_ERRORS
         if (IsNull()) value_ = object_t{};
 #endif
-        if (!IsObject()) throw std::runtime_error("JsonValue is not an object");
+        if (!IsObject()) throw std::runtime_error("JsonValue is not an object" + ToString());
         return std::get<object_t>(value_);
     }
 
     const array_t& GetArray() const
     {
-        if (!IsArray()) throw std::runtime_error("JsonValue is not an array");
+        if (!IsArray()) throw std::runtime_error("JsonValue is not an array" + ToString());
         return std::get<array_t>(value_);
     }
 
     const object_t& GetObject() const
     {
-        if (!IsObject()) throw std::runtime_error("JsonValue is not an object");
+        if (!IsObject()) throw std::runtime_error("JsonValue is not an object" + ToString());
         return std::get<object_t>(value_);
     }
 
@@ -149,7 +149,7 @@ class Json
 #ifndef JSON_FORMAT_STRICT_ERRORS
         if (IsNull()) value_ = array_t{};
 #endif
-        if (!IsArray()) throw std::runtime_error("Cannot push_back to non-array Json");
+        if (!IsArray()) throw std::runtime_error("Cannot push_back to non-array Json" + ToString());
         GetArray().push_back(element);
     }
 
@@ -158,7 +158,8 @@ class Json
 #ifndef JSON_FORMAT_STRICT_ERRORS
         if (IsNull()) value_ = array_t{};
 #endif
-        if (!IsArray()) throw std::runtime_error("Cannot emplace_back to non-array Json");
+        if (!IsArray())
+            throw std::runtime_error("Cannot emplace_back to non-array Json" + ToString());
         GetArray().emplace_back(element);
     }
 
@@ -167,14 +168,23 @@ class Json
 #ifndef JSON_FORMAT_STRICT_ERRORS
         if (IsNull()) value_ = array_t{};
 #endif
-        if (!IsArray()) throw std::runtime_error("Cannot push_back to non-array Json");
+        if (!IsArray()) throw std::runtime_error("Cannot push_back to non-array Json" + ToString());
         return GetArray().back();
     }
 
-    size_t size() // NOLINT (readability-identifier-naming)
+    size_t size() const // NOLINT (readability-identifier-naming)
     {
-        if (!IsArray() && !IsObject()) return 0;
-        return IsArray() ? GetArray().size() : GetObject().size();
+        if (IsString()) return GetString().size();
+        if (IsArray()) return GetArray().size();
+        if (IsObject()) return GetObject().size();
+        throw std::runtime_error("Json type doesn't have size(): " + ToString());
+    }
+
+    bool empty() // NOLINT (readability-identifier-naming)
+    {
+        if (!IsArray())
+            throw std::runtime_error("Cannot call empty on a non-array Json: " + ToString());
+        return GetArray().empty();
     }
 
     Json& operator[](const std::string& key)
@@ -205,7 +215,7 @@ class Json
 
     const Json& operator[](size_t index) const
     {
-        if (!IsArray()) throw std::runtime_error("Not an array");
+        if (!IsArray()) throw std::runtime_error("Not an array" + ToString());
         const auto& arr = std::get<array_t>(value_);
         if (index >= arr.size()) throw std::out_of_range("Index out of range");
         return arr[index];
